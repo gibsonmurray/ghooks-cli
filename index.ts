@@ -192,5 +192,14 @@ program
     )
     .action(updateLibrary)
 
+// Add a new command for installation success message
+program
+    .command("installed")
+    .description("Display a message indicating successful installation of the CLI")
+    .action(() => {
+        console.log(chalk.green("✅ @gibsonmurray/ghooks-cli has been successfully installed!"))
+        console.log(chalk.cyan("Use 'ghooks --help' to see available commands."))
+    })
+
 // Parse the CLI arguments
 program.parse()
