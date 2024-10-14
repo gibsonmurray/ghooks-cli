@@ -201,5 +201,18 @@ program
         console.log(chalk.cyan("Use 'ghooks --help' to see available commands."))
     })
 
-// Parse the CLI arguments
-program.parse()
+// Add a function to check and mark first run
+const checkFirstRun = () => {
+  const markerPath = join(__dirname, '.installed')
+  if (!existsSync(markerPath)) {
+    console.log(chalk.green("✅ @gibsonmurray/ghooks-cli has been successfully installed!"))
+    console.log(chalk.cyan("Use 'ghooks --help' to see available commands."))
+    writeFileSync(markerPath, 'installed', 'utf8')
+  }
+}
+
+// Modify the main execution to check for first run
+if (require.main === module) {
+  checkFirstRun()
+  program.parse(process.argv)
+}

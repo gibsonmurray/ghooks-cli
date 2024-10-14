@@ -30,8 +30,7 @@
     "scripts": {
         "start": "bun run index.ts",
         "build": "bun run build:esm && tsc",
-        "build:esm": "bun build index.ts --outdir ./dist --minify --target node",
-        "postinstall": "ghooks installed"
+        "build:esm": "bun build index.ts --outdir ./dist --minify --target node"
     },
     "publishConfig": {
         "access": "public"
