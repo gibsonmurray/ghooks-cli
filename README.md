@@ -7,7 +7,7 @@ GHooks is a command-line tool and React hooks library that allows you to easily 
 Install GHooks globally using your preferred package manager:
 
 ```bash
-npm install -g ghooks-cli
+npm install -g @gibsonmurray/ghooks-cli
 ```
 
 ## Command-Line Usage
