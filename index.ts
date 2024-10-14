@@ -195,24 +195,18 @@ program
 // Add a new command for installation success message
 program
     .command("installed")
-    .description("Display a message indicating successful installation of the CLI")
+    .description(
+        "Display a message indicating successful installation of the CLI"
+    )
     .action(() => {
-        console.log(chalk.green("✅ @gibsonmurray/ghooks-cli has been successfully installed!"))
-        console.log(chalk.cyan("Use 'ghooks --help' to see available commands."))
+        console.log(
+            chalk.green(
+                "✅ @gibsonmurray/ghooks-cli has been successfully installed!"
+            )
+        )
+        console.log(
+            chalk.cyan("Use 'ghooks --help' to see available commands.")
+        )
     })
 
-// Add a function to check and mark first run
-const checkFirstRun = () => {
-  const markerPath = join(__dirname, '.installed')
-  if (!existsSync(markerPath)) {
-    console.log(chalk.green("✅ @gibsonmurray/ghooks-cli has been successfully installed!"))
-    console.log(chalk.cyan("Use 'ghooks --help' to see available commands."))
-    writeFileSync(markerPath, 'installed', 'utf8')
-  }
-}
-
-// Modify the main execution to check for first run
-if (require.main === module) {
-  checkFirstRun()
-  program.parse(process.argv)
-}
+program.parse(process.argv)
