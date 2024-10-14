@@ -1,5 +1,5 @@
 {
-    "name": "ghooks-cli",
+    "name": "@gibsonmurray/ghooks-cli",
     "version": "1.0.0",
     "description": "A CLI for managing React hooks in your project",
     "bin": {
@@ -7,17 +7,24 @@
     },
     "type": "module",
     "devDependencies": {
-        "@types/bun": "latest"
+        "@types/bun": "latest",
+        "@types/inquirer": "^9.0.7"
     },
     "peerDependencies": {
         "typescript": "^5.0.0"
     },
     "dependencies": {
-        "@gibsonmurray/react-hooks": "^1.0.0-alpha.1",
+        "@gibsonmurray/react-hooks": "^1.0.5",
         "chalk": "^5.3.0",
-        "commander": "^12.1.0"
+        "commander": "^12.1.0",
+        "inquirer": "^12.0.0"
     },
     "scripts": {
-        "start": "bun run index.ts"
+        "start": "bun run index.ts",
+        "build": "bun run build:esm && tsc",
+        "build:esm": "bun build index.ts --outdir ./dist --minify"
+    },
+    "publishConfig": {
+        "access": "public"
     }
 }
