@@ -2,27 +2,35 @@
     "name": "@gibsonmurray/ghooks-cli",
     "version": "1.0.0",
     "description": "A CLI for managing React hooks in your project",
+    "type": "module",
+    "license": "MIT",
+    "repository": "https://github.com/gibsonmurray/ghooks-cli",
+    "homepage": "https://github.com/gibsonmurray/ghooks-cli#readme",
     "bin": {
         "ghooks": "./index.ts"
     },
-    "type": "module",
     "devDependencies": {
         "@types/bun": "latest",
-        "@types/inquirer": "^9.0.7"
+        "@types/inquirer": "^9.0.7",
+        "@types/semver": "^7.5.8"
     },
     "peerDependencies": {
         "typescript": "^5.0.0"
     },
     "dependencies": {
-        "@gibsonmurray/react-hooks": "^1.0.5",
+        "@gibsonmurray/react-hooks": "^1.0.9",
         "chalk": "^5.3.0",
         "commander": "^12.1.0",
-        "inquirer": "^12.0.0"
+        "inquirer": "^12.0.0",
+        "semver": "^7.6.3"
     },
+    "main": "dist/index.js",
+    "module": "dist/index.js",
+    "types": "dist/types/index.d.ts",
     "scripts": {
         "start": "bun run index.ts",
         "build": "bun run build:esm && tsc",
-        "build:esm": "bun build index.ts --outdir ./dist --minify"
+        "build:esm": "bun build index.ts --outdir ./dist --minify --target node"
     },
     "publishConfig": {
         "access": "public"

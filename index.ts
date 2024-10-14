@@ -5,6 +5,8 @@ import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs"
 import { join } from "path"
 import chalk from "chalk"
 import inquirer from "inquirer"
+import { execSync } from "child_process"
+import semver from "semver"
 
 chalk.level = 3 // Enable chalk with full color support
 
@@ -30,9 +32,9 @@ const addHook = async (
 
         // Check for dependencies first
         const importRegex = /import\s+.*?{?\s*(use[A-Z]\w+).*?}?\s+from/g
-        const importedDependencies = [
-            ...hookCode.matchAll(importRegex),
-        ].map((match) => match[1])
+        const importedDependencies = [...hookCode.matchAll(importRegex)].map(
+            (match) => match[1]
+        )
 
         // Add dependencies first
         for (const dep of importedDependencies) {
@@ -92,6 +94,46 @@ const selectHooks = async () => {
     return selectedHooks
 }
 
+const updateLibrary = async () => {
+    try {
+        const libraries = [
+            "@gibsonmurray/react-hooks",
+            "@gibsonmurray/ghooks-cli",
+        ]
+
+        for (const lib of libraries) {
+            const packageJsonPath = require.resolve(`${lib}/package.json`)
+            const packageJson = JSON.parse(
+                readFileSync(packageJsonPath, "utf-8")
+            )
+            const currentVersion = packageJson.version
+            console.log(
+                chalk.blue(`Current version of ${lib}: ${currentVersion}`)
+            )
+
+            const latestVersion = execSync(`npm show ${lib} version`, {
+                encoding: "utf8",
+            }).trim()
+            console.log(
+                chalk.blue(`Latest version of ${lib}: ${latestVersion}`)
+            )
+
+            if (semver.gt(latestVersion, currentVersion)) {
+                console.log(chalk.yellow(`Updating ${lib}...`))
+                execSync(`npm install ${lib}@latest`, { stdio: "inherit" })
+                console.log(chalk.green(`✅ ${lib} updated successfully!`))
+            } else {
+                console.log(chalk.green(`✅ ${lib} is already up to date!`))
+            }
+        }
+    } catch (error) {
+        console.error(
+            chalk.red("❌ Error updating libraries:"),
+            error instanceof Error ? error.message : String(error)
+        )
+    }
+}
+
 program
     .command("add [hookName]")
     .description("Add new React hook(s) to your project")
@@ -142,6 +184,13 @@ program
         console.log(chalk.cyan("Available hooks:"))
         availableHooks.forEach((hook) => console.log(chalk.yellow(`- ${hook}`)))
     })
+
+program
+    .command("update")
+    .description(
+        "Update the @gibsonmurray/react-hooks library to the latest version"
+    )
+    .action(updateLibrary)
 
 // Parse the CLI arguments
 program.parse()
