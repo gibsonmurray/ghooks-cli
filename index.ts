@@ -58,6 +58,14 @@ const addHook = async (
                 : chalk.green(`✅ ${hookName}.tsx added to ${hooksDir}`)
         )
 
+        if (hookName === "useFlipGSAP") {
+            console.log(
+                chalk.yellow(
+                    "⚠️  Note: useFlipGSAP requires gsap and @gsap/react libraries to work."
+                )
+            )
+        }
+
         addedHooks.add(hookName)
     } catch (error) {
         console.log(
@@ -84,10 +92,15 @@ const selectHooks = async () => {
             name: "selectedHooks",
             message: "Which hooks would you like to add?",
             choices: availableHooks.map((hook) => ({
-                name: hook,
+                name:
+                    hook === "useFlipGSAP"
+                        ? `${hook} (Requires gsap and @gsap/react libraries)`
+                        : hook,
                 value: hook,
             })),
             pageSize: 10,
+            loop: false,
+            required: true,
         },
     ])
 

@@ -2,6 +2,20 @@
 
 GHooks is a command-line tool and React hooks library that allows you to easily add pre-built React hooks to your project.
 
+## Table of Contents
+
+- [GHooks](#ghooks)
+  - [Table of Contents](#table-of-contents)
+  - [Installation](#installation)
+  - [Command-Line Usage](#command-line-usage)
+    - [Add Hooks](#add-hooks)
+    - [List Available Hooks](#list-available-hooks)
+  - [Update Library \& CLI](#update-library--cli)
+  - [Hooks Library](#hooks-library)
+  - [Library Usage](#library-usage)
+  - [Contributing](#contributing)
+  - [License](#license)
+
 ## Installation
 
 Install GHooks globally using your preferred package manager:
@@ -34,6 +48,12 @@ To list all available hooks:
 
 ```bash
 ghooks list
+```
+
+## Update Library & CLI
+
+```bash
+ghooks update
 ```
 
 ## Hooks Library
