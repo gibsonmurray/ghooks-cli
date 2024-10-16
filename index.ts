@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 
 import { Command } from "commander"
 import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs"
@@ -8,8 +8,6 @@ import inquirer from "inquirer"
 import { execSync } from "child_process"
 import semver from "semver"
 import axios from "axios"
-import { fileURLToPath } from "url"
-import { dirname } from "path"
 
 chalk.level = 3 // Enable chalk with full color support
 
@@ -118,7 +116,7 @@ const updateLibrary = async () => {
     try {
         const lib = "@gibsonmurray/ghooks-cli"
 
-        const currentVersion = getGlobalVersion()
+        const currentVersion = safeGetGlobalVersion()
 
         if (currentVersion === "unknown") {
             console.log(chalk.yellow(`⚠️ ${lib} is not installed globally.`))
@@ -147,7 +145,7 @@ const updateLibrary = async () => {
 }
 
 // Get the current version from the globally installed package.json
-const getGlobalVersion = (): string => {
+const getGlobalVersion = (): string | null => {
     try {
         const globalPath = execSync("npm root -g", { encoding: "utf8" }).trim()
         const packageJsonPath = join(
@@ -165,12 +163,25 @@ const getGlobalVersion = (): string => {
     } catch (error) {
         console.error(chalk.red("Error reading global package version:"), error)
     }
-    return "unknown"
+    return null
 }
 
-const currentVersion = getGlobalVersion()
+function safeGetGlobalVersion(): string {
+    const currentVersion = getGlobalVersion()
+    if (!currentVersion) {
+        console.log(
+            chalk.red(
+                "❌ Error: @gibsonmurray/ghooks-cli is not installed globally."
+            )
+        )
+        process.exit(1)
+    }
+    return currentVersion
+}
 
 // Add version option
+const currentVersion = safeGetGlobalVersion()
+
 program
     .version(
         currentVersion,

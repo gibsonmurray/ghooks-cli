@@ -7,7 +7,7 @@
     "repository": "https://github.com/gibsonmurray/ghooks-cli",
     "homepage": "https://github.com/gibsonmurray/ghooks-cli#readme",
     "bin": {
-        "ghooks": "./index.ts"
+        "ghooks": "./dist/index.js"
     },
     "devDependencies": {
         "@types/bun": "latest",
@@ -30,7 +30,8 @@
     "scripts": {
         "start": "bun run index.ts",
         "build": "bun run build:esm && tsc",
-        "build:esm": "bun build index.ts --outdir ./dist --minify --target node"
+        "build:esm": "bun build index.ts --outdir ./dist --minify --target node",
+        "dev": "node dist/index.js"
     },
     "publishConfig": {
         "access": "public"
