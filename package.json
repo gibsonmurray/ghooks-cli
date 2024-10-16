@@ -1,6 +1,6 @@
 {
     "name": "@gibsonmurray/ghooks-cli",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "description": "A CLI for managing React hooks in your project",
     "type": "module",
     "license": "MIT",
