@@ -7,10 +7,15 @@ import chalk from "chalk"
 import inquirer from "inquirer"
 import { execSync } from "child_process"
 import semver from "semver"
+import axios from "axios"
+import { fileURLToPath } from "url"
+import { dirname } from "path"
 
 chalk.level = 3 // Enable chalk with full color support
 
-const hooksPackage = await import("@gibsonmurray/react-hooks") // Dynamically import your hooks package
+const HOOKS_BASE_URL = `https://raw.githubusercontent.com/gibsonmurray/react-hooks/main/hooks`
+
+const HOOKS_URL = `https://api.github.com/repos/gibsonmurray/react-hooks/contents/hooks`
 
 // Initialize Commander
 const program = new Command()
@@ -25,26 +30,20 @@ const addHook = async (
     if (addedHooks.has(hookName)) return
 
     try {
-        const hookPath = require.resolve(
-            `@gibsonmurray/react-hooks/hooks/${hookName}`
-        )
-        const hookCode = readFileSync(hookPath, "utf-8")
+        const hookUrl = `${HOOKS_BASE_URL}/${hookName}.tsx`
+        const response = await axios.get(hookUrl)
+        const hookCode = response.data
 
-        // Check for dependencies first
-        const importRegex = /import\s+.*?{?\s*(use[A-Z]\w+).*?}?\s+from/g
-        const importedDependencies = [...hookCode.matchAll(importRegex)].map(
-            (match) => match[1]
-        )
+        // Check for custom hook dependencies
+        const importRegex =
+            /import\s+.*?{?\s*(use[A-Z]\w+).*?}?\s+from\s+['"]\.\/(\w+)['"]/g
+        const importedDependencies = [...hookCode.matchAll(importRegex)]
+            .map((match) => match[1])
+            .filter((dep) => dep !== hookName && !addedHooks.has(dep))
 
         // Add dependencies first
         for (const dep of importedDependencies) {
-            if (
-                dep !== hookName &&
-                !addedHooks.has(dep) &&
-                dep in hooksPackage
-            ) {
-                await addHook(dep, hooksDir, true)
-            }
+            await addHook(dep, hooksDir, true)
         }
 
         // Now add the current hook
@@ -81,71 +80,110 @@ const addHook = async (
 }
 
 const selectHooks = async () => {
-    const availableHooks = Object.keys(hooksPackage).filter(
-        (key) =>
-            typeof hooksPackage[key as keyof typeof hooksPackage] === "function"
-    )
+    try {
+        const response = await axios.get(HOOKS_URL)
+        const availableHooks = response.data
+            .filter((file: { name: string }) => file.name.endsWith(".tsx"))
+            .map((file: { name: string }) => file.name.replace(".tsx", ""))
 
-    const { selectedHooks } = await inquirer.prompt([
-        {
-            type: "checkbox",
-            name: "selectedHooks",
-            message: "Which hooks would you like to add?",
-            choices: availableHooks.map((hook) => ({
-                name:
-                    hook === "useFlipGSAP"
-                        ? `${hook} (Requires gsap and @gsap/react libraries)`
-                        : hook,
-                value: hook,
-            })),
-            pageSize: 10,
-            loop: false,
-            required: true,
-        },
-    ])
+        const { selectedHooks } = await inquirer.prompt([
+            {
+                type: "checkbox",
+                name: "selectedHooks",
+                message: "Which hooks would you like to add?",
+                choices: availableHooks.map((hook: string) => ({
+                    name:
+                        hook === "useFlipGSAP"
+                            ? `${hook} (Requires gsap and @gsap/react libraries)`
+                            : hook,
+                    value: hook,
+                })),
+                pageSize: 10,
+                loop: false,
+                required: true,
+            },
+        ])
 
-    return selectedHooks
+        return selectedHooks
+    } catch (error) {
+        console.error(
+            chalk.red("❌ Error fetching available hooks:"),
+            error instanceof Error ? error.message : String(error)
+        )
+        return []
+    }
 }
 
 const updateLibrary = async () => {
     try {
-        const libraries = [
-            "@gibsonmurray/react-hooks",
-            "@gibsonmurray/ghooks-cli",
-        ]
+        const lib = "@gibsonmurray/ghooks-cli"
 
-        for (const lib of libraries) {
-            const packageJsonPath = require.resolve(`${lib}/package.json`)
+        const currentVersion = getGlobalVersion()
+
+        if (currentVersion === "unknown") {
+            console.log(chalk.yellow(`⚠️ ${lib} is not installed globally.`))
+            return
+        }
+
+        console.log(
+            chalk.blue(`Current global version of ${lib}: ${currentVersion}`)
+        )
+
+        const latestVersion = execSync(`npm show ${lib} version`, {
+            encoding: "utf8",
+        }).trim()
+        console.log(chalk.blue(`Latest version of ${lib}: ${latestVersion}`))
+
+        if (semver.gt(latestVersion, currentVersion)) {
+            console.log(chalk.yellow(`Updating ${lib} globally...`))
+            execSync(`npm install -g ${lib}@latest`, { stdio: "inherit" })
+            console.log(chalk.green(`✅ ${lib} updated successfully!`))
+        } else {
+            console.log(chalk.green(`✅ ${lib} is already up to date!`))
+        }
+    } catch (error) {
+        console.error(chalk.red("❌ Error updating library:"), error)
+    }
+}
+
+// Get the current version from the globally installed package.json
+const getGlobalVersion = (): string => {
+    try {
+        const globalPath = execSync("npm root -g", { encoding: "utf8" }).trim()
+        const packageJsonPath = join(
+            globalPath,
+            "@gibsonmurray/ghooks-cli",
+            "package.json"
+        )
+
+        if (existsSync(packageJsonPath)) {
             const packageJson = JSON.parse(
                 readFileSync(packageJsonPath, "utf-8")
             )
-            const currentVersion = packageJson.version
-            console.log(
-                chalk.blue(`Current version of ${lib}: ${currentVersion}`)
-            )
-
-            const latestVersion = execSync(`npm show ${lib} version`, {
-                encoding: "utf8",
-            }).trim()
-            console.log(
-                chalk.blue(`Latest version of ${lib}: ${latestVersion}`)
-            )
-
-            if (semver.gt(latestVersion, currentVersion)) {
-                console.log(chalk.yellow(`Updating ${lib}...`))
-                execSync(`npm install ${lib}@latest`, { stdio: "inherit" })
-                console.log(chalk.green(`✅ ${lib} updated successfully!`))
-            } else {
-                console.log(chalk.green(`✅ ${lib} is already up to date!`))
-            }
+            return packageJson.version
         }
     } catch (error) {
-        console.error(
-            chalk.red("❌ Error updating libraries:"),
-            error instanceof Error ? error.message : String(error)
-        )
+        console.error(chalk.red("Error reading global package version:"), error)
     }
+    return "unknown"
 }
+
+const currentVersion = getGlobalVersion()
+
+// Add version option
+program
+    .version(
+        currentVersion,
+        "-v, -version, --version",
+        "Output the current version"
+    )
+    .command("version")
+    .description("Display the current version of the CLI")
+    .action(() => {
+        console.log(
+            chalk.cyan(`@gibsonmurray/ghooks-cli version: ${currentVersion}`)
+        )
+    })
 
 program
     .command("add [hookName]")
@@ -188,14 +226,25 @@ program
 program
     .command("list")
     .description("List all available hooks")
-    .action(() => {
-        const availableHooks = Object.keys(hooksPackage).filter(
-            (key) =>
-                typeof hooksPackage[key as keyof typeof hooksPackage] ===
-                "function"
-        )
-        console.log(chalk.cyan("Available hooks:"))
-        availableHooks.forEach((hook) => console.log(chalk.yellow(`- ${hook}`)))
+    .action(async () => {
+        try {
+            const response = await axios.get(
+                "https://api.github.com/repos/gibsonmurray/react-hooks/contents/src/hooks"
+            )
+            const availableHooks = response.data
+                .filter((file: { name: string }) => file.name.endsWith(".tsx"))
+                .map((file: { name: string }) => file.name.replace(".tsx", ""))
+
+            console.log(chalk.cyan("Available hooks:"))
+            availableHooks.forEach((hook: string) =>
+                console.log(chalk.yellow(`- ${hook}`))
+            )
+        } catch (error) {
+            console.error(
+                chalk.red("❌ Error fetching available hooks:"),
+                error instanceof Error ? error.message : String(error)
+            )
+        }
     })
 
 program
