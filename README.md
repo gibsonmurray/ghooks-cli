@@ -13,6 +13,7 @@ GHooks is a command-line tool and React hooks library that allows you to easily 
   - [Update Library \& CLI](#update-library--cli)
   - [Hooks Library](#hooks-library)
   - [Library Usage](#library-usage)
+  - [CLI Implementation](#cli-implementation)
   - [Contributing](#contributing)
   - [License](#license)
 
@@ -52,8 +53,16 @@ ghooks list
 
 ## Update Library & CLI
 
+To update the hooks in the project:
+
 ```bash
 ghooks update
+```
+
+To upgrade the CLI to the latest version:
+
+```bash
+ghooks upgrade
 ```
 
 ## Hooks Library
@@ -125,6 +134,34 @@ const MyComponent = () => {
     // ... rest of your component
 }
 ```
+
+## CLI Implementation
+
+The GHooks CLI is implemented in the `index.ts` file, which provides the following functionality:
+
+- **Adding Hooks**: Users can add hooks interactively or by specifying a hook name.
+- **Listing Hooks**: Displays all available hooks from the repository.
+- **Updating Hooks**: Updates existing hooks in the project to their latest versions.
+- **Upgrading CLI**: Upgrades the GHooks CLI to the latest version.
+- **Version Information**: Displays the current version of the CLI.
+
+The CLI uses several dependencies:
+
+- `commander`: For parsing command-line arguments and defining commands.
+- `inquirer`: For interactive command-line user interfaces.
+- `axios`: For making HTTP requests to fetch hook data.
+- `chalk`: For colorful console output.
+- `semver`: For semantic versioning comparisons.
+
+The main commands implemented in `index.ts` are:
+
+1. `ghooks add [hookName]`: Adds one or more hooks to the project.
+2. `ghooks list`: Lists all available hooks.
+3. `ghooks update`: Updates existing hooks in the project.
+4. `ghooks upgrade`: Upgrades the GHooks CLI to the latest version.
+5. `ghooks version`: Displays the current version of the CLI.
+
+The CLI fetches hook data from the GitHub repository, ensuring that users always have access to the latest versions of the hooks.
 
 ## Contributing
 
