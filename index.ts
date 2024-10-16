@@ -1,7 +1,13 @@
 #!/usr/bin/env node
 
 import { Command } from "commander"
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from "fs"
+import {
+    existsSync,
+    mkdirSync,
+    writeFileSync,
+    readFileSync,
+    readdirSync,
+} from "fs"
 import { join } from "path"
 import chalk from "chalk"
 import inquirer from "inquirer"
@@ -144,6 +150,73 @@ const updateLibrary = async () => {
     }
 }
 
+const updateHook = async (hookName: string, hooksDir: string) => {
+    try {
+        const hookUrl = `${HOOKS_BASE_URL}/${hookName}.tsx`
+        const response = await axios.get(hookUrl)
+        const newHookCode = response.data
+
+        const hookFile = join(hooksDir, `${hookName}.tsx`)
+        const currentHookCode = readFileSync(hookFile, "utf-8")
+
+        if (newHookCode !== currentHookCode) {
+            writeFileSync(hookFile, newHookCode)
+            console.log(chalk.green(`✅ ${hookName}.tsx updated successfully`))
+        } else {
+            console.log(chalk.blue(`ℹ️ ${hookName}.tsx is already up to date`))
+        }
+    } catch (error) {
+        console.log(
+            chalk.red(
+                `❌ Error updating hook '${hookName}': ${
+                    error instanceof Error ? error.message : String(error)
+                }`
+            )
+        )
+    }
+}
+
+const updateHooks = async () => {
+    try {
+        const projectRoot = process.cwd()
+        const hooksDir = join(projectRoot, "hooks")
+
+        if (!existsSync(hooksDir)) {
+            console.log(
+                chalk.yellow(
+                    "⚠️ No 'hooks' directory found in the current project."
+                )
+            )
+            return
+        }
+
+        const hookFiles = readdirSync(hooksDir).filter((file) =>
+            file.endsWith(".tsx")
+        )
+
+        if (hookFiles.length === 0) {
+            console.log(
+                chalk.yellow("⚠️ No hooks found in the 'hooks' directory.")
+            )
+            return
+        }
+
+        console.log(chalk.blue("Checking for updates to hooks..."))
+
+        for (const hookFile of hookFiles) {
+            const hookName = hookFile.replace(".tsx", "")
+            await updateHook(hookName, hooksDir)
+        }
+
+        console.log(chalk.cyan("✨ Hook update process completed."))
+    } catch (error) {
+        console.error(
+            chalk.red("❌ Error updating hooks:"),
+            error instanceof Error ? error.message : String(error)
+        )
+    }
+}
+
 // Get the current version from the globally installed package.json
 const getGlobalVersion = (): string | null => {
     try {
@@ -260,16 +333,23 @@ program
 
 program
     .command("update")
-    .description(
-        "Update the @gibsonmurray/react-hooks library to the latest version"
-    )
-    .action(updateLibrary)
+    .description("Update hooks in the project")
+    .action(async () => {
+        await updateHooks()
+    })
+
+program
+    .command("upgrade")
+    .description("Upgrade the @gibsonmurray/ghooks-cli library")
+    .action(async () => {
+        await updateLibrary()
+    })
 
 // Add a new command for installation success message
 program
     .command("installed")
     .description(
-        "Display a message indicating successful installation of the CLI"
+        "Display a message indicating successful installation of the CLI (development only)"
     )
     .action(() => {
         console.log(
